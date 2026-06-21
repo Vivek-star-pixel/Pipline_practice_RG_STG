@@ -109,6 +109,16 @@ stages:
     # ---------------------------
 
     - script: |
+        where python
+        where pip
+        where checkov
+        where gitleaks
+        where tflint
+      displayName: Verify Installed Tools
+
+
+
+    - script: |
         pip install checkov
         checkov -d . --soft-fail
       workingDirectory: $(WD)
