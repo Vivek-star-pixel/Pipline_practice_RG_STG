@@ -2,7 +2,12 @@ trigger: none
 
 pool: default
 
+
 stages:
+#----------------------------------------
+#Terraform_install_---------------------
+#-------------------------------------------
+
   - stage: Terraform_Setup_for_Pipline
     #displayName: "Terraform_install_process"
     jobs:
@@ -11,3 +16,24 @@ stages:
         - task: TerraformInstaller@1
           inputs:
             terraformVersion: 'latest'
+
+
+#----------------------------------------
+#Terraform_init_fmt_validate---------------------
+#-------------------------------------------            
+
+  - stage: FMT_cmd
+    displayName: FMT
+    dependsOn: Terraform_Setup_for_Pipline
+    jobs:
+      - job: FMT_cmnd
+        steps:
+        - task: TerraformTask@5
+          inputs:
+            provider: 'azurerm'
+            command: 'custom'
+            workingDirectory: '$(System.DefaultWorkingDirectory)/env /dev'
+            outputTo: 'console'
+            customCommand: 'fmt'
+            environmentServiceNameAzureRM: 'vicky-service-connection'
+            environmentAzureRmOverrideSubscriptionID: '69ba3bc7-f967-4749-bbe8-54cb06e4a54a'
