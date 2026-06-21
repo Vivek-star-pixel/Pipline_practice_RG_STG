@@ -3,9 +3,10 @@ trigger: none
 pool: default
 
 stages:
-  - stage:
+  - stage: Terraform_Setup_for_Pipline
+    displayName: "Terraform_install_process"
     jobs:
-      - job: 
+      - job: Terafforminstall
         steps:
         - task: TerraformInstaller@1
           inputs:
