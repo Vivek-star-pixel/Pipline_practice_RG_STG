@@ -4,7 +4,7 @@ pool: default
 
 stages:
   - stage: Terraform_Setup_for_Pipline
-    displayName: "Terraform_install_process"
+    #displayName: "Terraform_install_process"
     jobs:
       - job: Terafforminstall
         steps:
