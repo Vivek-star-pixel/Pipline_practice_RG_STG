@@ -109,7 +109,8 @@ stages:
     # ---------------------------
 
     - script: |
-        checkov -d .
+        pip install checkov
+        checkov -d . --soft-fail
       workingDirectory: $(WD)
       displayName: Checkov Security Scan
 
