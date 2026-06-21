@@ -1,69 +1,138 @@
 trigger: none
 
-pool: default
+pool:
+  name: default
 
 variables:
-  WD : '$(System.DefaultWorkingDirectory)/env/dev'
-  Sub_Con : '69ba3bc7-f967-4749-bbe8-54cb06e4a54a'
+  WD: '$(System.DefaultWorkingDirectory)/env/dev'
+
+  # Service Connection
   Svc: 'vicky-service-connection'
-  BCRG : 'vivek-rg'
-  BC_STG : 'vivek12345stg'
+  Sub_Con: '69ba3bc7-f967-4749-bbe8-54cb06e4a54a'
+
+  # Backend Configuration
+  BCRG: 'vivek-rg'
+  BC_STG: 'vivek12345stg'
   BC_Cont: 'vivekcon1'
   BC_SF: 'terraform123456_pipline.tfstate'
+
+# ==========================================
+# Stage 1 - Terraform Setup
+# ==========================================
+
 stages:
-#----------------------------------------
-#Terraform_install_---------------------
-#-------------------------------------------
 
-  - stage: Terraform_Setup_for_Pipline
-    #displayName: "Terraform_install_process"
-    jobs:
-      - job: Terafforminstall
-        steps:
-        - task: TerraformInstaller@1
-          inputs:
-            terraformVersion: 'latest'
+- stage: Terraform_Setup
+  displayName: Terraform Setup
 
+  jobs:
+  - job: Install_Terraform
 
-#----------------------------------------
-#Terraform_init_fmt_validate---------------------
-#-------------------------------------------            
+    steps:
 
-  - stage: FMT_cmd
-    displayName: FMT
-    dependsOn: Terraform_Setup_for_Pipline
-    jobs:
-      - job: FMT_init_validate_cmnd
-        steps:
-        - task: TerraformTask@5
-          inputs:
-            provider: 'azurerm'
-            command: 'custom'
-            workingDirectory: '$(WD)'
-            outputTo: 'console'
-            customCommand: 'fmt'
-            environmentServiceNameAzureRM: '$(Svc)'
-            environmentAzureRmOverrideSubscriptionID: '$(Sub_Con)'
+    - task: TerraformInstaller@1
+      displayName: Install Terraform
+      inputs:
+        terraformVersion: 'latest'
 
-        - task: TerraformTask@5
-          displayName: init
-          inputs:
-            provider: 'azurerm'
-            command: 'init'
-            workingDirectory: '$(WD)'
-            backendServiceArm: '$(Svc)'
-            backendAzureRmOverrideSubscriptionID: '$(Sub_Con)'
-            backendAzureRmResourceGroupName: '$(BCRG)'
-            backendAzureRmStorageAccountName: '$(BC_STG)'
-            backendAzureRmContainerName: '$(BC_Cont)'
-            backendAzureRmKey: '$(BC_SF)'
+# ==========================================
+# Stage 2 - Terraform Validation & Security
+# ==========================================
 
-        - task: TerraformTask@5
-          displayName: validate
-          inputs:
-            provider: 'azurerm'
-            command: 'validate'
-            workingDirectory: '$(WD)'
+- stage: Terraform_CI
+  displayName: Terraform CI
+  dependsOn: Terraform_Setup
 
-            
+  jobs:
+  - job: Validation_and_Security
 
+    steps:
+
+    # ---------------------------
+    # Terraform fmt
+    # ---------------------------
+
+    - task: TerraformTask@5
+      displayName: Terraform FMT
+      inputs:
+        provider: azurerm
+        command: custom
+        customCommand: fmt
+        workingDirectory: $(WD)
+        outputTo: console
+        environmentServiceNameAzureRM: $(Svc)
+        environmentAzureRmOverrideSubscriptionID: $(Sub_Con)
+
+    # ---------------------------
+    # Terraform Init
+    # ---------------------------
+
+    - task: TerraformTask@5
+      displayName: Terraform Init
+      inputs:
+        provider: azurerm
+        command: init
+        workingDirectory: $(WD)
+
+        backendServiceArm: $(Svc)
+        backendAzureRmOverrideSubscriptionID: $(Sub_Con)
+        backendAzureRmResourceGroupName: $(BCRG)
+        backendAzureRmStorageAccountName: $(BC_STG)
+        backendAzureRmContainerName: $(BC_Cont)
+        backendAzureRmKey: $(BC_SF)
+
+    # ---------------------------
+    # Terraform Validate
+    # ---------------------------
+
+    - task: TerraformTask@5
+      displayName: Terraform Validate
+      inputs:
+        provider: azurerm
+        command: validate
+        workingDirectory: $(WD)
+
+    # ---------------------------
+    # TFLint
+    # Code Quality
+    # ---------------------------
+
+    - script: |
+        tflint --init
+        tflint
+      workingDirectory: $(WD)
+      displayName: TFLint Scan
+
+    # ---------------------------
+    # Checkov
+    # IaC Security Scan
+    # ---------------------------
+
+    - script: |
+        checkov -d .
+      workingDirectory: $(WD)
+      displayName: Checkov Security Scan
+
+    # ---------------------------
+    # Gitleaks
+    # Secret Scanning
+    # ---------------------------
+
+    - script: |
+        gitleaks detect --source .
+      displayName: Gitleaks Secret Scan
+
+    # ---------------------------
+    # Terraform Plan
+    # Dry Run Only
+    # ---------------------------
+
+    - task: TerraformTask@5
+      displayName: Terraform Plan
+      inputs:
+        provider: azurerm
+        command: plan
+        workingDirectory: $(WD)
+
+        environmentServiceNameAzureRM: $(Svc)
+        environmentAzureRmOverrideSubscriptionID: $(Sub_Con)
