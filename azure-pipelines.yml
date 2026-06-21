@@ -26,7 +26,7 @@ stages:
     displayName: FMT
     dependsOn: Terraform_Setup_for_Pipline
     jobs:
-      - job: FMT_cmnd
+      - job: FMT_init_validate_cmnd
         steps:
         - task: TerraformTask@5
           inputs:
@@ -37,3 +37,26 @@ stages:
             customCommand: 'fmt'
             environmentServiceNameAzureRM: 'vicky-service-connection'
             environmentAzureRmOverrideSubscriptionID: '69ba3bc7-f967-4749-bbe8-54cb06e4a54a'
+
+        - task: TerraformTask@5
+          displayName: init
+          inputs:
+            provider: 'azurerm'
+            command: 'init'
+            workingDirectory: '$(System.DefaultWorkingDirectory)/env/dev'
+            backendServiceArm: 'vicky-service-connection'
+            backendAzureRmOverrideSubscriptionID: '69ba3bc7-f967-4749-bbe8-54cb06e4a54a'
+            backendAzureRmResourceGroupName: 'vivek-rg'
+            backendAzureRmStorageAccountName: 'vivek12345stg'
+            backendAzureRmContainerName: 'vivekcon1'
+            backendAzureRmKey: 'terraform123456_pipline.tfstate'
+
+        - task: TerraformTask@5
+          displayName: validate
+          inputs:
+            provider: 'azurerm'
+            command: 'validate'
+            workingDirectory: '$(System.DefaultWorkingDirectory)/env/dev'
+
+            
+
