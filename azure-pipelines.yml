@@ -32,7 +32,7 @@ stages:
           inputs:
             provider: 'azurerm'
             command: 'custom'
-            workingDirectory: '$(System.DefaultWorkingDirectory)/env /dev'
+            workingDirectory: '$(System.DefaultWorkingDirectory)/env/dev'
             outputTo: 'console'
             customCommand: 'fmt'
             environmentServiceNameAzureRM: 'vicky-service-connection'
