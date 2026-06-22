@@ -1,7 +1,7 @@
 vivek_rg = {
 
   rg1 = {
-    rg_name  = "rg-dev"
+    name     = "rg-dev"
     location = "central india"
     tags = {
       environment = "dev"
